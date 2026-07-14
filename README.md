@@ -1,5 +1,5 @@
 ---
-title: ChestNet AI: Lung Disease Classifier
+title: "ChestNet AI: Lung Disease Classifier"
 emoji: 🩺
 colorFrom: teal
 colorTo: indigo
