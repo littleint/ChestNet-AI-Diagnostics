@@ -150,4 +150,7 @@ with gr.Blocks(title="ChestNet AI") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(server_name="127.0.0.1", server_port=7860, share=False)
+    # Bind to PORT environment variable injected by hosting providers like Render
+    port = int(os.environ.get("PORT", 7860))
+    # Bind to 0.0.0.0 to accept external traffic in containerized environments
+    demo.launch(server_name="0.0.0.0", server_port=port, share=False)
