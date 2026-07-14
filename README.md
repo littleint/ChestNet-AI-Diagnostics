@@ -1,26 +1,16 @@
----
-title: "ChestNet AI: Lung Disease Classifier"
-emoji: 🩺
-colorFrom: green
-colorTo: indigo
-sdk: gradio
-sdk_version: 6.20.0
-app_file: app.py
-pinned: false
-license: mit
----
-
 # 🩺 ChestNet AI: Multi-Class Lung Diagnostics
 
-ChestNet AI is an interactive deep learning prototype designed to classify Chest X-rays into five distinct lung health categories. The model uses a custom **Gated-Attention Feature Pyramid Network (FPN)** backbone with MobileNetV2 and DenseNet121, providing explainable AI (XAI) capabilities through **Grad-CAM attention overlays**.
+ChestNet AI is an interactive deep learning prototype designed to classify Chest X-rays into five distinct lung health categories. The model leverages a custom **Gated-Attention Feature Pyramid Network (FPN)** backbone that fuses features from MobileNetV2 and DenseNet121. To assist with clinical interpretability, the application generates **Grad-CAM attention overlays** to highlight the spatial regions influencing the model's classifications.
 
-## 📊 Classification Categories
-The model predicts five conditions:
-*   **Bacterial Pneumonia**
-*   **Corona Virus Disease (COVID-19)**
-*   **Normal**
-*   **Tuberculosis**
-*   **Viral Pneumonia**
+---
+
+## 📊 Diagnostic Categories
+The model predicts the following five lung conditions:
+*   **Bacterial Pneumonia**: Characterized by localized lobar or segmental airspace consolidation.
+*   **Corona Virus Disease (COVID-19)**: Typically presents as bilateral, peripheral ground-glass opacities (GGOs) or consolidations.
+*   **Normal**: Clear lung fields with no significant consolidations, effusions, or abnormal masses.
+*   **Tuberculosis**: Often characterized by apical infiltrates, cavitary lung lesions, or hilar lymphadenopathy.
+*   **Viral Pneumonia**: Presents as diffuse, non-lobar bilateral interstitial infiltrates or patchy opacities.
 
 ---
 
@@ -28,17 +18,18 @@ The model predicts five conditions:
 
 ```
 .
-├── .gitattributes          # Git LFS configuration for heavy model files
-├── README.md               # GitHub docs & Hugging Face Space configuration
-├── app.py                  # Main Gradio application entry point
-├── best_model.keras        # Trained Keras model file (~113 MB)
-├── class_mapping.json      # Mapping from class indices to labels
-├── requirements.txt        # Project python package requirements
+├── .gitattributes          # Git LFS configuration for binary model and image files
+├── .gitignore              # Ignores python caches, notebook checkpoints, and IDE folders
+├── README.md               # Project documentation and deployment guide
+├── app.py                  # Main Gradio application containing model pipeline and UI
+├── best_model.keras        # Trained FPN Gated-Attention Keras model file (~113 MB)
+├── class_mapping.json      # JSON mapping class indices to pathology labels
+├── requirements.txt        # Python package dependencies
 ├── notebooks/              # Directory for model notebooks
 │   └── lung-disease-detection.ipynb
-└── samples/                # Directory containing reference images for testing
-    ├── normal.jpg          # Reference normal radiograph
-    └── pneumonia.jpg       # Reference pneumonia radiograph
+└── samples/                # Directory containing test images for quick prototyping
+    ├── normal.jpg          # Sample normal chest X-ray
+    └── pneumonia.jpg       # Sample chest X-ray with bacterial pneumonia
 ```
 
 ---
@@ -47,8 +38,8 @@ The model predicts five conditions:
 
 1. **Clone the Repository**:
    ```bash
-   git clone <your-repo-url>
-   cd Xray
+   git clone https://github.com/littleint/ChestNet-AI-Diagnostics.git
+   cd ChestNet-AI-Diagnostics
    ```
 
 2. **Install Dependencies**:
@@ -64,35 +55,35 @@ The model predicts five conditions:
 
 ---
 
-## 🌐 Deploying to Hugging Face Spaces
+## ☁️ Deploying to Render
 
-Hugging Face Spaces allows you to host this Gradio app for free. Follow these steps to deploy:
+Render is a cloud hosting platform where you can deploy this Gradio app as a Web Service.
 
-1. **Create a Space**:
-   * Go to [huggingface.co/new-space](https://huggingface.co/new-space).
-   * Enter a space name.
-   * Select **Gradio** as the SDK.
-   * Choose the **CPU Basic** hardware (free tier is sufficient).
+### ⚙️ Deployment Instructions
 
-2. **Upload Repository Files**:
-   Since the model file `best_model.keras` exceeds 100MB, you must configure **Git LFS** when pushing your repository:
-   ```bash
-   # Initialize Git
-   git init
-   
-   # Install Git LFS (if not already installed)
-   git lfs install
+1. **Create Web Service**:
+   * Log in to your account at [dashboard.render.com](https://dashboard.render.com).
+   * Click **New +** and select **Web Service**.
+   * Connect your GitHub account and select the **`ChestNet-AI-Diagnostics`** repository.
 
-   # Track Keras files
-   git lfs track "*.keras"
+2. **Configure Environment Settings**:
+   * **Language**: `Python`
+   * **Branch**: `main`
+   * **Build Command**: `pip install -r requirements.txt`
+   * **Start Command**: `python -u app.py`
 
-   # Add files and commit
-   git add .
-   git commit -m "Initial commit with FPN Gated-Attention model and Gradio app"
+3. **Instance Type (Important)**:
+   * **Do not use the Free tier (512 MB RAM)**. Loading TensorFlow CPU and compiles the custom `ResizeToLike` layer requires at least **1.5 GB to 2 GB of RAM** during boot. The free tier will crash with an Out-of-Memory (OOM) error (Exit Code `137`).
+   * Choose the **Starter tier (2 GB RAM)** or higher.
 
-   # Add Hugging Face Space as a remote and push
-   git remote add hf https://huggingface.co/spaces/<your-username>/<your-space-name>
-   git push -f hf master
-   ```
+Render will automatically inject a `PORT` environment variable. The Gradio app is pre-configured to bind dynamically to this port and listen on host `0.0.0.0` for web routing.
 
-Hugging Face will automatically install the packages listed in `requirements.txt`, read the configuration in `README.md`, load the model, and deploy the Gradio app!
+---
+
+## 🩺 Explainable AI: Grad-CAM
+The application computes gradients of the top predicted class score with respect to the `merged_pyramid` FPN layer (shape: `56x56x640`). These gradients are global-average-pooled and used to weight the activation maps. The resulting heatmap is resized and superimposed back onto the original radiograph, visually highlighting the pathological focus regions.
+
+---
+
+## ⚠️ Disclaimer
+*This AI application is a prototype built for prototyping, educational, and research purposes. It is not a certified medical device and is not intended for clinical diagnostics or decision-making.*
